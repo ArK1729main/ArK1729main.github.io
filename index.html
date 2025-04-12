@@ -17,11 +17,11 @@
         .day-row {
             display: flex;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         .label {
-            width: 160px;
+            width: 80px;
             flex-shrink: 0;
         }
 
@@ -45,7 +45,7 @@
         }
 
         .slot {
-            width: 35px;
+            width: 50px;
             height: 40px;
             box-sizing: border-box;
             border-right: 1px solid #ccc;
@@ -79,33 +79,77 @@
 
         @media (max-width: 600px) {
             .controls {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
+                margin-bottom: 1rem;
+                font-size: 1.2rem;
+                /* 全体のフォントサイズを大きく */
             }
 
+            .controls input {
+                padding: 0.5rem;
+                font-size: 1rem;
+                /* 入力フィールドのフォントサイズを大きく */
+                width: 50px;
+                /* 入力フィールドの幅を調整 */
+            }
+
+            .controls label {
+                margin-right: 0.5rem;
+            }
+
+            .controls button {
+                padding: 0.5rem 1rem;
+                font-size: 1rem;
+                /* ボタンのフォントサイズを大きく */
+                cursor: pointer;
+            }
+
+
             .day-row {
-                flex-direction: column;
-                align-items: flex-start;
-                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.5rem;
             }
 
             .label {
-                margin-bottom: 0.3rem;
+                width: 100px;
+                /* 日付ラベルの幅を狭く */
+                flex-shrink: 0;
             }
 
             .time-grid-wrapper {
-                width: 100%;
-                overflow-x: scroll;
+                overflow-x: auto;
+                max-width: 80%;
+                /* 時間指定部分の幅を狭く */
+            }
+
+            .time-grid {
+                display: flex;
+                height: 30px;
+                /* 高さを調整 */
+                min-width: fit-content;
             }
 
             .slot {
-                width: 50px;
+                width: 30px;
+                /* 各スロットの幅を狭く */
                 height: 30px;
+                /* 各スロットの高さを調整 */
+                box-sizing: border-box;
+                border-right: 1px solid #ccc;
+                background-color: #f0f0f0;
+                cursor: pointer;
+                flex-shrink: 0;
+                position: relative;
             }
 
             .slot-time {
-                font-size: 0.75rem;
+                font-size: 0.5rem;
+                /* 時間ラベルのフォントサイズを小さく */
+                color: #aaa;
+                text-align: center;
+                line-height: 30px;
+                /* 高さに合わせて調整 */
+                pointer-events: none;
             }
 
             .day-controls {
@@ -121,9 +165,36 @@
 
     <div class="controls">
         <label for="year">年:</label>
-        <input type="number" id="year" value="2025" min="2020" max="2100">
+        <select id="year">
+            <!-- 年の選択肢を動的に生成 -->
+            <script>
+                const yearSelect = document.getElementById("year");
+                for (let y = 2020; y <= 2100; y++) {
+                    const option = document.createElement("option");
+                    option.value = y;
+                    option.textContent = y;
+                    yearSelect.appendChild(option);
+                }
+            </script>
+        </select>
+
         <label for="month">月:</label>
-        <input type="number" id="month" value="4" min="1" max="12">
+        <select id="month">
+            <!-- 月の選択肢 -->
+            <option value="1">1月</option>
+            <option value="2">2月</option>
+            <option value="3">3月</option>
+            <option value="4">4月</option>
+            <option value="5">5月</option>
+            <option value="6">6月</option>
+            <option value="7">7月</option>
+            <option value="8">8月</option>
+            <option value="9">9月</option>
+            <option value="10">10月</option>
+            <option value="11">11月</option>
+            <option value="12">12月</option>
+        </select>
+
         <button onclick="render()">表示</button>
     </div>
 
@@ -134,7 +205,6 @@
 
         function formatDate(date) {
             return date.toLocaleDateString('ja-JP', {
-                month: '2-digit',
                 day: '2-digit',
                 weekday: 'short'
             });
@@ -204,11 +274,11 @@
                 dayControls.className = "day-controls";
 
                 const toggleBtn = document.createElement("button");
-                toggleBtn.textContent = "選択";
+                toggleBtn.textContent = "解除";
                 toggleBtn.addEventListener("click", () => {
                     const allSelected = slots.every(slot => slot.classList.contains("selected"));
                     slots.forEach(slot => slot.classList.toggle("selected", !allSelected));
-                    toggleBtn.textContent = allSelected ? "選択" : "解除";
+                    toggleBtn.textContent = allSelected ? "解除" : "選択";
                 });
 
                 dayControls.appendChild(toggleBtn);
