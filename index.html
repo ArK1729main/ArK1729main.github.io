@@ -164,7 +164,7 @@
     <h2>シフト希望時間（開始と終了をクリックで範囲選択）</h2>
 
     <div class="controls">
-        <label for="year">年:</label>
+
         <select id="year">
             <!-- 年の選択肢を動的に生成 -->
             <script>
@@ -177,8 +177,8 @@
                 }
             </script>
         </select>
+        <label for="year">年:</label>
 
-        <label for="month">月:</label>
         <select id="month">
             <!-- 月の選択肢 -->
             <option value="1">1月</option>
@@ -194,7 +194,7 @@
             <option value="11">11月</option>
             <option value="12">12月</option>
         </select>
-
+        <label for="month">月:</label>
         <button onclick="render()">表示</button>
     </div>
 
@@ -274,11 +274,9 @@
                 dayControls.className = "day-controls";
 
                 const toggleBtn = document.createElement("button");
-                toggleBtn.textContent = "解除";
+                toggleBtn.textContent = "選択解除";
                 toggleBtn.addEventListener("click", () => {
-                    const allSelected = slots.every(slot => slot.classList.contains("selected"));
-                    slots.forEach(slot => slot.classList.toggle("selected", !allSelected));
-                    toggleBtn.textContent = allSelected ? "解除" : "選択";
+                    slots.forEach(slot => slot.classList.remove("selected")); // 全ての選択を解除
                 });
 
                 dayControls.appendChild(toggleBtn);
