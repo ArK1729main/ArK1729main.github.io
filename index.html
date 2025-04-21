@@ -295,11 +295,12 @@
             };
 
 
-            fetch("https://cors-anywhere.herokuapp.com/https://81566b33.form.kintoneapp.com/wr-api/assign_request_order", {
+            fetch("https://81566b33.form.kintoneapp.com/wr-api/assign_request_order", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
+                credentials: "include", // Cookieを含める
                 body: JSON.stringify(postData)
             })
                 .then(response => {
