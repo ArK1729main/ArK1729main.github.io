@@ -10,7 +10,8 @@
             padding: 2rem;
         }
 
-        .controls {
+        .controls,
+        .user-info {
             margin-bottom: 1rem;
         }
 
@@ -76,111 +77,25 @@
             padding: 2px 6px;
             cursor: pointer;
         }
-
-        @media (max-width: 600px) {
-            .controls {
-                margin-bottom: 1rem;
-                font-size: 1.2rem;
-                /* 全体のフォントサイズを大きく */
-            }
-
-            .controls input {
-                padding: 0.5rem;
-                font-size: 1rem;
-                /* 入力フィールドのフォントサイズを大きく */
-                width: 50px;
-                /* 入力フィールドの幅を調整 */
-            }
-
-            .controls label {
-                margin-right: 0.5rem;
-            }
-
-            .controls button {
-                padding: 0.5rem 1rem;
-                font-size: 1rem;
-                /* ボタンのフォントサイズを大きく */
-                cursor: pointer;
-            }
-
-
-            .day-row {
-                display: flex;
-                align-items: center;
-                margin-bottom: 0.5rem;
-            }
-
-            .label {
-                width: 100px;
-                /* 日付ラベルの幅を狭く */
-                flex-shrink: 0;
-            }
-
-            .time-grid-wrapper {
-                overflow-x: auto;
-                max-width: 80%;
-                /* 時間指定部分の幅を狭く */
-            }
-
-            .time-grid {
-                display: flex;
-                height: 30px;
-                /* 高さを調整 */
-                min-width: fit-content;
-            }
-
-            .slot {
-                width: 30px;
-                /* 各スロットの幅を狭く */
-                height: 30px;
-                /* 各スロットの高さを調整 */
-                box-sizing: border-box;
-                border-right: 1px solid #ccc;
-                background-color: #f0f0f0;
-                cursor: pointer;
-                flex-shrink: 0;
-                position: relative;
-            }
-
-            .slot-time {
-                font-size: 0.5rem;
-                /* 時間ラベルのフォントサイズを小さく */
-                color: #aaa;
-                text-align: center;
-                line-height: 30px;
-                /* 高さに合わせて調整 */
-                pointer-events: none;
-            }
-
-            .day-controls {
-                margin-top: 0.3rem;
-                margin-left: 0;
-            }
-        }
     </style>
 </head>
 
 <body>
     <h2>シフト希望時間（開始と終了をクリックで範囲選択）</h2>
 
-    <div class="controls">
+    <div class="user-info">
+        <h3>社員情報を入力</h3>
+        <label>社員番号: <input type="text" id="empId"></label><br>
+        <label>姓: <input type="text" id="lastName"></label><br>
+        <label>名: <input type="text" id="firstName"></label><br>
+        <label>生年月日（例: 19900101）: <input type="text" id="birthDate"></label><br>
+    </div>
 
-        <select id="year">
-            <!-- 年の選択肢を動的に生成 -->
-            <script>
-                const yearSelect = document.getElementById("year");
-                for (let y = 2020; y <= 2100; y++) {
-                    const option = document.createElement("option");
-                    option.value = y;
-                    option.textContent = y;
-                    yearSelect.appendChild(option);
-                }
-            </script>
-        </select>
+    <div class="controls">
+        <select id="year"></select>
         <label for="year">年:</label>
 
         <select id="month">
-            <!-- 月の選択肢 -->
             <option value="1">1月</option>
             <option value="2">2月</option>
             <option value="3">3月</option>
@@ -200,7 +115,23 @@
 
     <div id="container"></div>
 
+    <div class="controls">
+        ...
+        <button onclick="submitData()">送信</button>
+        <!--
+        <button onclick="previewData()">プレビュー</button>
+       -->
+    </div>
+
     <script>
+        const yearSelect = document.getElementById("year");
+        for (let y = 2025; y <= 2100; y++) {
+            const option = document.createElement("option");
+            option.value = y;
+            option.textContent = y;
+            yearSelect.appendChild(option);
+        }
+
         const hours = [...Array(13).keys()].map(i => i + 10); // 10時〜22時
 
         function formatDate(date) {
@@ -276,7 +207,7 @@
                 const toggleBtn = document.createElement("button");
                 toggleBtn.textContent = "選択解除";
                 toggleBtn.addEventListener("click", () => {
-                    slots.forEach(slot => slot.classList.remove("selected")); // 全ての選択を解除
+                    slots.forEach(slot => slot.classList.remove("selected"));
                 });
 
                 dayControls.appendChild(toggleBtn);
@@ -289,7 +220,6 @@
             }
         }
 
-        // 初期表示は翌月
         (function init() {
             const today = new Date();
             let nextMonth = today.getMonth() + 2;
@@ -299,6 +229,169 @@
             document.getElementById("month").value = nextMonth;
             render();
         })();
+
+        function submitData() {
+            const empId = document.getElementById("empId").value.trim();
+            const lastName = document.getElementById("lastName").value.trim();
+            const firstName = document.getElementById("firstName").value.trim();
+            const birthDate = document.getElementById("birthDate").value.trim();
+
+            const selectedData = [];
+
+            const year = parseInt(document.getElementById("year").value);
+            const month = parseInt(document.getElementById("month").value);
+
+            const container = document.getElementById("container");
+            const rows = container.querySelectorAll(".day-row");
+
+            rows.forEach((row, index) => {
+                const selectedSlots = row.querySelectorAll(".slot.selected");
+                if (selectedSlots.length === 0) return;
+
+                const date = new Date(year, month - 1, index + 1); // 月は0-indexed
+                const baseDateStr = date.toISOString().split("T")[0]; // yyyy-mm-dd
+
+                const hours = Array.from(selectedSlots).map(slot => parseInt(slot.dataset.index));
+                const startHour = 10 + Math.min(...hours);
+                const endHour = 10 + Math.max(...hours);
+
+                selectedData.push({
+                    rowId: generateUUID(),
+                    value: {
+                        勤務希望日: { type: "DATE", value: baseDateStr },
+                        希望開始時刻: { type: "TIME", value: `${String(startHour).padStart(2, "0")}:00` },
+                        希望終了時刻: { type: "TIME", value: `${String(endHour).padStart(2, "0")}:00` },
+                        表示用希望開始日時: { type: "DATETIME", value: "" },
+                        表示用希望終了日時: { type: "DATETIME", value: "" }
+                    }
+                });
+            });
+
+            const postData = {
+                data: {
+                    社員番号: { type: "NUMBER", value: parseInt(empId) },
+                    姓: { type: "SINGLE_LINE_TEXT", value: lastName },
+                    名: { type: "SINGLE_LINE_TEXT", value: firstName },
+                    生年月日: { type: "NUMBER", value: parseInt(birthDate) },
+                    確認用姓: { type: "SINGLE_LINE_TEXT", value: "" },
+                    確認用名: { type: "SINGLE_LINE_TEXT", value: "" },
+                    確認用生年月日: { type: "NUMBER", value: null },
+                    シフト希望登録: {
+                        type: "SUBTABLE",
+                        value: selectedData
+                    },
+                    作業内容: { type: "DROP_DOWN", value: "" },
+                    可能作業: { type: "DROP_DOWN", value: "" },
+                    登録済: { type: "DROP_DOWN", value: "" },
+                    配属先: { type: "SINGLE_LINE_TEXT", value: "" },
+                    __client_browser__: { type: "SINGLE_LINE_TEXT", value: navigator.userAgent },
+                    __client_ip__: { type: "SINGLE_LINE_TEXT", value: "36.52.137.21" }, // 固定値
+                    __client_os__: { type: "SINGLE_LINE_TEXT", value: "windows" }, // 固定値
+                    __client_referer__: { type: "SINGLE_LINE_TEXT", value: document.referrer },
+                    __locale__: { type: "SINGLE_LINE_TEXT", value: "ja" },
+                    __posted_at__: { type: "DATETIME", value: new Date().toISOString() },
+                    __title__: { type: "SINGLE_LINE_TEXT", value: "わたや沼田店　シフト登録" }
+                }
+            };
+
+
+            fetch("https://81566b33.form.kintoneapp.com/public/2ef843f505f516f848f05dcdf871f8cb1db5fb870e11ec30b34f7aeda9683352", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(postData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("データ送信に失敗しました");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("送信成功:", data);
+                    alert("データが正常に送信されました");
+                })
+                .catch(error => {
+                    console.error("エラー:", error);
+                    alert("データ送信中にエラーが発生しました");
+                });
+        }
+
+        function previewData() {
+            const empId = document.getElementById("empId").value.trim();
+            const lastName = document.getElementById("lastName").value.trim();
+            const firstName = document.getElementById("firstName").value.trim();
+            const birthDate = document.getElementById("birthDate").value.trim();
+
+            const selectedData = [];
+
+            const year = parseInt(document.getElementById("year").value);
+            const month = parseInt(document.getElementById("month").value);
+
+            const container = document.getElementById("container");
+            const rows = container.querySelectorAll(".day-row");
+
+            rows.forEach((row, index) => {
+                const selectedSlots = row.querySelectorAll(".slot.selected");
+                if (selectedSlots.length === 0) return;
+
+                const date = new Date(year, month - 1, index + 1); // 月は0-indexed
+                const baseDateStr = date.toISOString().split("T")[0]; // yyyy-mm-dd
+
+                const hours = Array.from(selectedSlots).map(slot => parseInt(slot.dataset.index));
+                const startHour = 10 + Math.min(...hours);
+                const endHour = 10 + Math.max(...hours);
+
+                selectedData.push({
+                    rowId: generateUUID(),
+                    value: {
+                        勤務希望日: { type: "DATE", value: baseDateStr },
+                        希望開始時刻: { type: "TIME", value: `${String(startHour).padStart(2, "0")}:00` },
+                        希望終了時刻: { type: "TIME", value: `${String(endHour).padStart(2, "0")}:00` },
+                        表示用希望開始日時: { type: "DATETIME", value: "" },
+                        表示用希望終了日時: { type: "DATETIME", value: "" }
+                    }
+                });
+            });
+
+            const postData = {
+                data: {
+                    社員番号: { type: "NUMBER", value: parseInt(empId) },
+                    姓: { type: "SINGLE_LINE_TEXT", value: lastName },
+                    名: { type: "SINGLE_LINE_TEXT", value: firstName },
+                    生年月日: { type: "NUMBER", value: parseInt(birthDate) },
+                    確認用姓: { type: "SINGLE_LINE_TEXT", value: "" },
+                    確認用名: { type: "SINGLE_LINE_TEXT", value: "" },
+                    確認用生年月日: { type: "NUMBER", value: null },
+                    シフト希望登録: {
+                        type: "SUBTABLE",
+                        value: selectedData
+                    },
+                    登録済: { type: "DROP_DOWN", value: "" },
+                    配属先: { type: "SINGLE_LINE_TEXT", value: "" },
+                    __client_browser__: { type: "SINGLE_LINE_TEXT", value: navigator.userAgent },
+                    __client_ip__: { type: "SINGLE_LINE_TEXT", value: "36.52.137.21" }, // 固定値
+                    __client_os__: { type: "SINGLE_LINE_TEXT", value: "windows" }, // 固定値
+                    __client_referer__: { type: "SINGLE_LINE_TEXT", value: document.referrer },
+                    __locale__: { type: "SINGLE_LINE_TEXT", value: "ja" },
+                    __posted_at__: { type: "DATETIME", value: new Date().toISOString() },
+                    __title__: { type: "SINGLE_LINE_TEXT", value: "わたや沼田店　シフト登録" }
+                }
+            };
+
+            console.log("Preview Data:", JSON.stringify(postData, null, 2));
+            alert("データがコンソールに出力されました。");
+        }
+
+        // UUIDを生成する関数
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                const r = (Math.random() * 16) | 0;
+                const v = c === 'x' ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+            });
+        }
     </script>
 </body>
 
